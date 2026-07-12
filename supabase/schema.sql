@@ -74,11 +74,14 @@ alter table tags enable row level security;
 alter table pets enable row level security;
 alter table scan_events enable row level security;
 
+drop policy if exists "public read active tags" on tags;
 create policy "public read active tags" on tags
 for select using (true);
 
+drop policy if exists "public read pets" on pets;
 create policy "public read pets" on pets
 for select using (true);
 
+drop policy if exists "public create scan events" on scan_events;
 create policy "public create scan events" on scan_events
 for insert with check (true);
