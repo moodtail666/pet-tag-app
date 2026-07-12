@@ -25,7 +25,7 @@ export default async function PublicPetPage({ params }: { params: { tagId: strin
       <section className="card">
         <h1>这枚吊牌尚未激活</h1>
         <p className="muted">如果你是主人，请使用 Tag ID 和激活码激活。</p>
-        <Link className="button" href="/activate">立即激活</Link>
+        <Link className="button" href={`/activate?tagId=${encodeURIComponent(tagId)}`}>立即激活</Link>
       </section>
     );
   }

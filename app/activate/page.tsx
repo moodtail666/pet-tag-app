@@ -1,91 +1,61 @@
-import { redirect } from "next/navigation";
-import { supabaseAdmin } from "@/lib/supabase";
+"use client";
 
-async function activateTag(formData: FormData) {
-  "use server";
+import Link from "next/link";
+import { FormEvent, Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
-  const email = String(formData.get("email") || "").trim().toLowerCase();
-  const tagId = String(formData.get("tagId") || "").trim();
-  const code = String(formData.get("code") || "").trim().toUpperCase();
+function ActivateForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const initialTagId = searchParams.get("tagId") || "";
 
-  if (!email || !tagId || !code) {
-    redirect("/activate?error=missing");
-  }
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true);
+    setMessage("");
 
-  const { data: tag } = await supabaseAdmin
-    .from("tags")
-    .select("*")
-    .eq("tag_id", tagId)
-    .maybeSingle();
+    const { data } = await getSupabaseBrowserClient().auth.getSession();
+    if (!data.session) {
+      router.push(`/auth?next=${encodeURIComponent(`/activate?tagId=${initialTagId}`)}`);
+      return;
+    }
 
-  if (!tag || String(tag.activation_code).toUpperCase() !== code) {
-    redirect("/activate?error=invalid");
-  }
-
-  if (tag.owner_email && tag.owner_email !== email) {
-    redirect("/activate?error=claimed");
-  }
-
-  await supabaseAdmin
-    .from("tags")
-    .update({
-      owner_email: email,
-      status: "active",
-      activated_at: new Date().toISOString()
-    })
-    .eq("tag_id", tagId);
-
-  const { data: pet } = await supabaseAdmin
-    .from("pets")
-    .select("id")
-    .eq("tag_id", tagId)
-    .maybeSingle();
-
-  if (!pet) {
-    await supabaseAdmin.from("pets").insert({
-      tag_id: tagId,
-      owner_email: email,
-      name: "My Pet",
-      show_phone: true,
-      show_address: false
+    const form = new FormData(event.currentTarget);
+    const response = await fetch("/api/activate", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${data.session.access_token}`
+      },
+      body: JSON.stringify({ tagId: form.get("tagId"), code: form.get("code") })
     });
+    const result = await response.json();
+
+    if (!response.ok) setMessage(result.error || "激活失败，请重试。");
+    else router.push("/dashboard");
+    setBusy(false);
   }
-
-  redirect(`/dashboard?email=${encodeURIComponent(email)}`);
-}
-
-function errorText(error?: string) {
-  if (error === "missing") return "请填写邮箱、Tag ID 和激活码。";
-  if (error === "invalid") return "Tag ID 或激活码不正确。";
-  if (error === "claimed") return "这枚吊牌已经被其他邮箱激活。";
-  return "";
-}
-
-export default function ActivatePage({ searchParams }: { searchParams: { error?: string } }) {
-  const error = errorText(searchParams.error);
 
   return (
     <section className="card">
       <h1>激活吊牌</h1>
-      <p className="muted">输入吊牌背面的 Tag ID 和 Activation Code，绑定到你的邮箱。</p>
-      {error ? <div className="notice warn">{error}</div> : null}
-      <form action={activateTag}>
-        <label>
-          邮箱
-          <input name="email" type="email" required placeholder="you@example.com" />
-        </label>
+      <p className="muted">先登录账号，再输入吊牌背面的 Tag ID 和 Activation Code。</p>
+      {message ? <div className="notice warn">{message}</div> : null}
+      <form onSubmit={submit}>
         <div className="grid two">
-          <label>
-            Tag ID
-            <input name="tagId" required placeholder="10000001" />
-          </label>
-          <label>
-            Activation Code
-            <input name="code" required placeholder="A7K9" />
-          </label>
+          <label>Tag ID<input name="tagId" required defaultValue={initialTagId} placeholder="10000001" /></label>
+          <label>Activation Code<input name="code" required placeholder="A7K9" /></label>
         </div>
-        <button className="button" type="submit">Activate</button>
+        <button className="button" type="submit" disabled={busy}>{busy ? "正在激活..." : "激活到我的账号"}</button>
+        <Link className="button secondary" href={`/auth?next=${encodeURIComponent(`/activate?tagId=${initialTagId}`)}`}>登录或注册</Link>
       </form>
     </section>
   );
+}
+
+export default function ActivatePage() {
+  return <Suspense fallback={<section className="card">正在打开激活页面...</section>}><ActivateForm /></Suspense>;
 }

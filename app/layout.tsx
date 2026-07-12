@@ -19,8 +19,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Link>
             <nav className="nav">
               <Link href="/activate">激活</Link>
-              <Link href="/dashboard">后台</Link>
-              <Link href="/admin/tags">管理员</Link>
+              <Link href="/dashboard">我的宠物</Link>
+              <Link href="/auth">登录 / 注册</Link>
             </nav>
           </header>
           {children}

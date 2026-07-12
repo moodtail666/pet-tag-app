@@ -4,6 +4,7 @@ create table if not exists tags (
   id uuid primary key default gen_random_uuid(),
   tag_id text not null unique,
   activation_code text not null,
+  owner_user_id uuid,
   owner_email text,
   status text not null default 'unactivated' check (status in ('unactivated', 'active', 'lost', 'disabled')),
   activated_at timestamptz,
@@ -14,6 +15,7 @@ create table if not exists tags (
 create table if not exists pets (
   id uuid primary key default gen_random_uuid(),
   tag_id text not null unique references tags(tag_id) on delete cascade,
+  owner_user_id uuid,
   owner_email text not null,
   name text not null default 'My Pet',
   photo_url text,
@@ -54,6 +56,19 @@ values
   ('10000002', 'M3Q8', 'unactivated'),
   ('99999993', 'ABCD', 'unactivated')
 on conflict (tag_id) do nothing;
+
+alter table tags add column if not exists owner_user_id uuid;
+alter table pets add column if not exists owner_user_id uuid;
+
+create index if not exists tags_owner_user_id_idx on tags(owner_user_id);
+create index if not exists pets_owner_user_id_idx on pets(owner_user_id);
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('pet-photos', 'pet-photos', true, 5242880, array['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+on conflict (id) do update set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
 
 alter table tags enable row level security;
 alter table pets enable row level security;
