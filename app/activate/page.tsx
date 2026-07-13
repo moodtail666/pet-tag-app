@@ -14,29 +14,36 @@ function ActivateForm() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const tagId = String(form.get("tagId") || "").trim();
+    const code = String(form.get("code") || "").trim();
     setBusy(true);
     setMessage("");
 
-    const { data } = await getSupabaseBrowserClient().auth.getSession();
-    if (!data.session) {
-      router.push(`/auth?next=${encodeURIComponent(`/activate?tagId=${initialTagId}`)}`);
-      return;
+    try {
+      const { data } = await getSupabaseBrowserClient().auth.getSession();
+      if (!data.session) {
+        router.push(`/auth?next=${encodeURIComponent(`/activate?tagId=${tagId}`)}`);
+        return;
+      }
+
+      const response = await fetch("/api/activate", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${data.session.access_token}`
+        },
+        body: JSON.stringify({ tagId, code })
+      });
+      const result = await response.json();
+
+      if (!response.ok) setMessage(result.error || "激活失败，请重试。");
+      else router.push("/dashboard");
+    } catch {
+      setMessage("网络连接失败，请稍后重试。");
+    } finally {
+      setBusy(false);
     }
-
-    const form = new FormData(event.currentTarget);
-    const response = await fetch("/api/activate", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${data.session.access_token}`
-      },
-      body: JSON.stringify({ tagId: form.get("tagId"), code: form.get("code") })
-    });
-    const result = await response.json();
-
-    if (!response.ok) setMessage(result.error || "激活失败，请重试。");
-    else router.push("/dashboard");
-    setBusy(false);
   }
 
   return (
