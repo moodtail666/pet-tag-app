@@ -1,0 +1,38 @@
+import { NextResponse } from "next/server";
+import { getAdminUser, writeAdminAudit } from "@/lib/admin-auth";
+import { supabaseAdmin } from "@/lib/supabase";
+
+const DEFAULT_SETTINGS = {
+  brandName: "Pet Tag",
+  supportEmail: "",
+  homeHeadline: "A safer way home for every pet.",
+  homeText: "Scan the tag to view the pet profile and contact the owner."
+};
+
+export async function GET(request: Request) {
+  const admin = await getAdminUser(request);
+  if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const { data } = await supabaseAdmin.from("site_settings").select("value").eq("key", "public_site").maybeSingle();
+  return NextResponse.json({ settings: { ...DEFAULT_SETTINGS, ...(data?.value || {}) } });
+}
+
+export async function PUT(request: Request) {
+  const admin = await getAdminUser(request);
+  if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const body = await request.json();
+  const value = {
+    brandName: String(body.brandName || "").trim().slice(0, 80),
+    supportEmail: String(body.supportEmail || "").trim().slice(0, 160),
+    homeHeadline: String(body.homeHeadline || "").trim().slice(0, 160),
+    homeText: String(body.homeText || "").trim().slice(0, 500)
+  };
+  const { error } = await supabaseAdmin.from("site_settings").upsert({
+    key: "public_site",
+    value,
+    updated_by: admin.id,
+    updated_at: new Date().toISOString()
+  });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  await writeAdminAudit(admin, "site.settings.update", "setting", "public_site");
+  return NextResponse.json({ settings: value });
+}

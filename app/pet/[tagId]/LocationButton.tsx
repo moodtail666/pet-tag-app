@@ -7,11 +7,11 @@ export function LocationButton({ tagId }: { tagId: string }) {
 
   async function shareLocation() {
     if (!navigator.geolocation) {
-      setMessage("当前浏览器不支持定位。");
+      setMessage("Location sharing is not supported on this device.");
       return;
     }
 
-    setMessage("正在请求定位授权...");
+    setMessage("Waiting for location permission...");
     navigator.geolocation.getCurrentPosition(async position => {
       const body = {
         tagId,
@@ -24,15 +24,16 @@ export function LocationButton({ tagId }: { tagId: string }) {
         body: JSON.stringify(body)
       });
 
-      setMessage(response.ok ? "位置已发送给主人。" : "发送失败，请直接联系主人。");
+      setMessage(response.ok ? "Your location was sent to the owner." : "Unable to send location. Please contact the owner directly.");
     }, () => {
-      setMessage("你拒绝了定位授权，可以直接电话联系主人。");
+      setMessage("Location was not shared. You can still contact the owner directly.");
     }, { enableHighAccuracy: true, timeout: 10000 });
   }
 
   return (
     <div className="grid">
-      <button className="button" type="button" onClick={shareLocation}>发送当前位置给主人</button>
+      <p className="location-consent">Your precise location is shared with this pet's registered owner only after you press the button and allow location access.</p>
+      <button className="button" type="button" onClick={shareLocation}>Share my location with the owner</button>
       {message ? <div className="notice">{message}</div> : null}
     </div>
   );

@@ -3,7 +3,7 @@ export type TagStatus = "unactivated" | "active" | "lost" | "disabled";
 export type Tag = {
   id: string;
   tag_id: string;
-  activation_code: string;
+  activation_code: string | null;
   owner_user_id: string | null;
   owner_email: string | null;
   status: TagStatus;

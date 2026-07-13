@@ -11,5 +11,15 @@ export async function GET(request: Request) {
     supabaseAdmin.from("pets").select("*").eq("owner_user_id", user.id).order("updated_at", { ascending: false })
   ]);
 
-  return NextResponse.json({ tags: tagResult.data || [], pets: petResult.data || [] });
+  const tagIds = (tagResult.data || []).map((tag) => tag.tag_id);
+  const scanResult = tagIds.length
+    ? await supabaseAdmin
+        .from("scan_events")
+        .select("id,tag_id,scanned_at,map_url,location_permission,notification_status")
+        .in("tag_id", tagIds)
+        .order("scanned_at", { ascending: false })
+        .limit(20)
+    : { data: [] };
+
+  return NextResponse.json({ tags: tagResult.data || [], pets: petResult.data || [], scans: scanResult.data || [] });
 }

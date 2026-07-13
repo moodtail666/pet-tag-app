@@ -1,15 +1,22 @@
 import Link from "next/link";
+import { supabaseAdmin } from "@/lib/supabase";
 
-export default function HomePage() {
+const defaults = {
+  homeHeadline: "A safer way home for every pet.",
+  homeText: "Activate your pet tag, add contact details, and receive an alert when someone finds your pet."
+};
+
+export default async function HomePage() {
+  const { data } = await supabaseAdmin.from("site_settings").select("value").eq("key", "public_site").maybeSingle();
+  const settings = { ...defaults, ...(data?.value || {}) };
+
   return (
     <section className="card">
-      <h1>扫码激活宠物吊牌，帮宠物更快回家。</h1>
-      <p className="muted">
-        主人用 Tag ID 和激活码绑定吊牌，填写宠物资料。别人扫码后可以查看公开资料，并把当前位置发送给主人。
-      </p>
+      <h1>{settings.homeHeadline}</h1>
+      <p className="muted">{settings.homeText}</p>
       <div className="actions">
-        <Link className="button" href="/activate">激活吊牌</Link>
-        <Link className="button secondary" href="/pet/10000001">查看公开页示例</Link>
+        <Link className="button" href="/activate">Activate a tag</Link>
+        <Link className="button secondary" href="/dashboard">Manage my pets</Link>
       </div>
     </section>
   );
