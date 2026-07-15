@@ -79,7 +79,7 @@ export default async function PublicPetPage({ params }: { params: Promise<{ tagI
             </div>
           ))}
         </div>
-        <LocationButton tagId={tagId} />
+        <LocationButton tagId={tagId} petName={pet.name} />
       </div>
     </section>
   );
