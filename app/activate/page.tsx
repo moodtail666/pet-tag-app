@@ -5,6 +5,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { QrCode } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
+import QrScanner from "./QrScanner";
 
 function ActivateTag() {
   const router = useRouter();
@@ -41,8 +42,9 @@ function ActivateTag() {
     return (
       <section className="card auth-card">
         <QrCode className="page-symbol" size={34} aria-hidden="true" />
-        <h1>Set up a Tailvori tag</h1>
-        <p className="muted">Scan the QR code on your physical pet tag with your phone. No Tag ID or activation code is required.</p>
+        <h1>Add another pet tag</h1>
+        <p className="muted">Scan the QR on the physical tag with this camera, or choose a saved QR image. No Tag ID or activation code is required.</p>
+        <QrScanner onTagFound={(foundTagId) => router.push(`/activate?tagId=${encodeURIComponent(foundTagId)}`)} />
         <Link className="button secondary" href="/dashboard">Open my pets</Link>
       </section>
     );
