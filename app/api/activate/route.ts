@@ -5,8 +5,8 @@ import { supabaseAdmin } from "@/lib/supabase";
 
 export async function POST(request: Request) {
   const user = await getApiUser(request);
-  if (!user || !user.email || !user.email_confirmed_at) {
-    return NextResponse.json({ error: "Confirm your email and sign in first." }, { status: 401 });
+  if (!user || !user.email) {
+    return NextResponse.json({ error: "Sign in first." }, { status: 401 });
   }
 
   const body = await request.json().catch(() => ({}));

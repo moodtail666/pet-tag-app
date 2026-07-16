@@ -54,7 +54,7 @@ function ActivateTag() {
     <section className="card auth-card">
       <QrCode className="page-symbol" size={34} aria-hidden="true" />
       <h1>Register this pet tag</h1>
-      <p className="muted">Sign in with a verified email to connect this tag to your account, then add your pet's details.</p>
+      <p className="muted">Sign in to connect this tag to your account, then add your pet's details.</p>
       {message ? <div className="notice warn">{message}</div> : null}
       <button className="button" type="button" onClick={claimTag} disabled={busy}>{busy ? "Registering..." : "Register and set up my pet"}</button>
       <Link className="button secondary" href={`/auth?next=${encodeURIComponent(`/activate?tagId=${tagId}`)}`}>Sign in or create account</Link>

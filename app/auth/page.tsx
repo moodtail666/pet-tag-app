@@ -44,7 +44,7 @@ function AuthForm() {
         });
         if (error) setMessage(error.message);
         else if (data.session) router.replace(next);
-        else setMessage("Check your inbox and confirm your email, then return here to sign in.");
+        else setMessage("Account created. Sign in to continue.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) setMessage("The email or password is incorrect.");

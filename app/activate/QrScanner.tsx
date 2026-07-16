@@ -49,18 +49,20 @@ export default function QrScanner({ onTagFound }: Props) {
     setMessage("");
     setScanning(true);
     try {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      if (!videoRef.current) throw new Error("Camera preview is not ready.");
       const { BrowserQRCodeReader } = await import("@zxing/browser");
       const reader = new BrowserQRCodeReader();
       controlsRef.current = await reader.decodeFromConstraints(
         { video: { facingMode: { ideal: "environment" } }, audio: false },
-        videoRef.current || undefined,
+        videoRef.current,
         (result) => {
           if (result) acceptResult(result.getText());
         }
       );
     } catch {
       stopScanner();
-      setMessage("Camera access was unavailable. Allow camera access or choose a QR image instead.");
+      setMessage("Camera access was unavailable. Open this page in Safari or Chrome, allow camera access, or choose a QR image instead.");
     }
   }
 
@@ -76,7 +78,7 @@ export default function QrScanner({ onTagFound }: Props) {
       const result = await new BrowserQRCodeReader().decodeFromImageUrl(imageUrl);
       acceptResult(result.getText());
     } catch {
-      setMessage("No readable QR code was found in that image.");
+      setMessage("No readable QR code was found. Choose the original QR image or a clear, uncropped photo.");
     } finally {
       URL.revokeObjectURL(imageUrl);
     }
