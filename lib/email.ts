@@ -1,7 +1,10 @@
 import { Resend } from "resend";
 
 const resendKey = process.env.RESEND_API_KEY;
-const from = process.env.EMAIL_FROM || "Tailvori <notify@example.com>";
+const configuredFrom = process.env.EMAIL_FROM || "";
+const from = configuredFrom.includes("@resend.dev")
+  ? "Tailvori <alerts@notify.tailvori.com>"
+  : configuredFrom || "Tailvori <alerts@notify.tailvori.com>";
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[character] || character));
