@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import QRCode from "qrcode";
 import JSZip from "jszip";
 import { getAdminUser, writeAdminAudit } from "@/lib/admin-auth";
-import { generateActivationCode, generateTagId, hashActivationCode } from "@/lib/security";
+import { generateTagId } from "@/lib/security";
 import { supabaseAdmin } from "@/lib/supabase";
 
 export async function GET(request: Request) {
@@ -41,15 +41,14 @@ export async function POST(request: Request) {
   const origin = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
   const generated = Array.from({ length: count }, () => {
     const tagId = generateTagId();
-    const activationCode = generateActivationCode();
-    return { tagId, activationCode, qrUrl: `${origin}/t/${tagId}` };
+    return { tagId, qrUrl: `${origin}/t/${tagId}` };
   });
 
   const { error } = await supabaseAdmin.from("tags").insert(
     generated.map((tag) => ({
       tag_id: tag.tagId,
       activation_code: null,
-      activation_code_hash: hashActivationCode(tag.activationCode),
+      activation_code_hash: null,
       batch_id: batchId,
       status: "unactivated"
     }))
@@ -57,15 +56,23 @@ export async function POST(request: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const zip = new JSZip();
-  const csvRows = ["tag_id,activation_code,qr_url,qr_filename"];
+  const csvRows = ["tag_id,qr_url,qr_filename,batch_id"];
   for (const tag of generated) {
     const filename = `${tag.tagId}.svg`;
-    const svg = await QRCode.toString(tag.qrUrl, { type: "svg", errorCorrectionLevel: "M", margin: 2 });
-    zip.file(`qr/${filename}`, svg);
-    csvRows.push(`${tag.tagId},${tag.activationCode},${tag.qrUrl},${filename}`);
+    const svg = await QRCode.toString(tag.qrUrl, { type: "svg", errorCorrectionLevel: "H", margin: 2 });
+    zip.file(`factory/qr/${filename}`, svg);
+    csvRows.push(`${tag.tagId},${tag.qrUrl},${filename},${batchId}`);
   }
   zip.file("production-manifest.csv", `\uFEFF${csvRows.join("\r\n")}`);
-  zip.file("README.txt", "Each QR code is unique. Pair every QR filename with the activation code on the same CSV row.\r\n");
+  zip.file("FACTORY-INSTRUCTIONS.txt", [
+    "TAILVORI UNIQUE QR PRODUCTION SPEC",
+    "",
+    "1. Every physical tag must use its matching SVG file from factory/qr.",
+    "2. Print SCAN TO HELP ME HOME below the QR code.",
+    "3. No visible Tag ID, product card, or activation code is required.",
+    "4. Do not reuse a QR image on another tag.",
+    "5. Scan-test samples from every production batch before packing."
+  ].join("\r\n"));
 
   await writeAdminAudit(admin, "tags.generate", "batch", batchId, { count });
   const archive = await zip.generateAsync({ type: "uint8array", compression: "DEFLATE" });

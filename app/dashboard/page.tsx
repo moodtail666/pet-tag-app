@@ -59,7 +59,7 @@ export default function DashboardPage() {
     <section className="grid">
       <div className="card account-bar">
         <div><h1>My pets</h1><p className="muted">{email}</p></div>
-        <div className="actions"><Link className="button" href="/activate">Activate another tag</Link><button className="button secondary" onClick={logout}>Sign out</button></div>
+        <div className="actions"><Link className="button" href="/activate">Activate another tag</Link><Link className="button secondary" href="/account">Account</Link><button className="button secondary" onClick={logout}>Sign out</button></div>
       </div>
       <div className="card">
         <h2>Registered tags</h2>
@@ -68,7 +68,7 @@ export default function DashboardPage() {
             const pet = pets.find((item) => item.tag_id === tag.tag_id);
             return (
               <div className="row" key={tag.tag_id}>
-                <div><strong>{pet?.name || "Complete pet profile"}</strong><p className="muted">Tag ending {tag.tag_id.slice(-4)} · {tag.status}</p></div>
+                <div><strong>{pet?.name || "Complete pet profile"}</strong><p className="muted">Tag ending {tag.tag_id.slice(-4)} - {tag.status}</p></div>
                 <div className="actions">
                   <Link className="button secondary" href={`/dashboard/pets/${tag.tag_id}/edit`}>Edit profile</Link>
                   <Link className="button secondary" href={`/t/${tag.tag_id}`}>View public page</Link>

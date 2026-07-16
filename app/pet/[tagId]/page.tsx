@@ -29,8 +29,8 @@ export default async function PublicPetPage({ params }: { params: Promise<{ tagI
     return (
       <section className="card">
         <h1>Set up this pet tag</h1>
-        <p className="muted">Sign in and enter the private activation code from the product card.</p>
-        <Link className="button" href={`/activate?tagId=${encodeURIComponent(tagId)}`}>Activate tag</Link>
+        <p className="muted">Register or sign in to connect this tag to your pet. No code is required.</p>
+        <Link className="button" href={`/activate?tagId=${encodeURIComponent(tagId)}`}>Register this tag</Link>
       </section>
     );
   }

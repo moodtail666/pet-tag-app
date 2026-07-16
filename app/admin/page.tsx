@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BarChart3, Download, PawPrint, QrCode, Search, Settings, ShieldCheck, Users } from "lucide-react";
+import { BarChart3, Download, PawPrint, QrCode, RotateCcw, Search, Settings, ShieldCheck, Users } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 
 type Tab = "overview" | "tags" | "users" | "pets" | "scans" | "site";
@@ -126,6 +126,25 @@ export default function AdminPage() {
     }
   }
 
+  async function releaseTag(tagId: string) {
+    if (!window.confirm(`Release ${tagId}? This permanently removes its pet profile, photo, and scan history.`)) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      await api(`/api/admin/tags/${encodeURIComponent(tagId)}`, {
+        method: "DELETE",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ confirmTagId: tagId })
+      });
+      setMessage(`${tagId} is ready for a new owner.`);
+      await load();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to release the tag.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function saveSite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -179,6 +198,7 @@ export default function AdminPage() {
           <>
             <section className="admin-section">
               <h2>Create production batch</h2>
+              <p className="muted">Each physical tag receives its own QR image. Customers scan it and register directly; no product card or activation code is required.</p>
               <form className="batch-form" onSubmit={generateBatch}>
                 <label>Batch name<input name="batchId" defaultValue={new Date().toISOString().slice(0, 10)} required /></label>
                 <label>Quantity<input name="count" type="number" min="1" max="100" defaultValue="10" required /></label>
@@ -186,10 +206,11 @@ export default function AdminPage() {
               </form>
             </section>
             <DataToolbar search={search} setSearch={setSearch} setPage={setPage} busy={busy} />
-            <DataTable columns={["Tag ID", "Batch", "Owner", "Status", "Created"]} rows={rows.map((row) => [
+            <DataTable columns={["Tag ID", "Batch", "Owner", "Status", "Created", "Action"]} rows={rows.map((row) => [
               row.tag_id, row.batch_id || "-", row.owner_email || "Unregistered",
               <select key={`${row.tag_id}-status`} value={String(row.status)} disabled={busy} onChange={(event) => updateTagStatus(String(row.tag_id), event.target.value)}><option value="unactivated">Unactivated</option><option value="active">Active</option><option value="lost">Lost</option><option value="disabled">Disabled</option></select>,
-              formatDate(row.created_at)
+              formatDate(row.created_at),
+              row.owner_email ? <button key={`${row.tag_id}-release`} className="icon-button danger" type="button" title="Release tag" aria-label={`Release ${row.tag_id}`} disabled={busy} onClick={() => releaseTag(String(row.tag_id))}><RotateCcw size={16} /></button> : "-"
             ])} />
           </>
         ) : null}
@@ -202,6 +223,7 @@ export default function AdminPage() {
           <section className="admin-section site-settings">
             <form onSubmit={saveSite}>
               <label>Brand name<input name="brandName" defaultValue={settings.brandName} required /></label>
+              <label>Legal business name<input name="businessName" defaultValue={settings.businessName} required /></label>
               <label>Support email<input name="supportEmail" type="email" defaultValue={settings.supportEmail} /></label>
               <label>Home headline<input name="homeHeadline" defaultValue={settings.homeHeadline} required /></label>
               <label>Home text<textarea name="homeText" defaultValue={settings.homeText} required /></label>

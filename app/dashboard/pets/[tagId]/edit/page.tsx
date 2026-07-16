@@ -55,6 +55,7 @@ export default function EditPetPage({ params }: { params: Promise<{ tagId: strin
       <form onSubmit={save}>
         {pet.photo_url ? <img className="photo-preview" src={pet.photo_url} alt={pet.name} /> : null}
         <label>Pet photo<input name="photo" type="file" accept="image/jpeg,image/png,image/webp" /></label>
+        {pet.photo_url ? <label className="check-row"><input name="removePhoto" type="checkbox" /> Remove the current photo</label> : null}
         <div className="grid two">
           <label>Pet name<input name="name" defaultValue={pet.name || ""} required /></label>
           <label>Breed<input name="breed" defaultValue={pet.breed || ""} /></label>

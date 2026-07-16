@@ -1,21 +1,24 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getSiteSettings } from "@/lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Pet Tag ID",
-  description: "Register a pet ID tag and help lost pets get home safely."
+  title: { default: "Tailvori", template: "%s | Tailvori" },
+  description: "Register a Tailvori pet ID tag and help lost pets get home safely.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://tailvori.com")
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const settings = await getSiteSettings();
   return (
     <html lang="en">
       <body>
         <main className="shell">
           <header className="topbar">
             <Link className="brand" href="/">
-              <span className="mark">PT</span>
-              <strong>Pet Tag ID</strong>
+              <span className="mark">TV</span>
+              <strong>{settings.brandName}</strong>
             </Link>
             <nav className="nav">
               <Link href="/activate">Activate</Link>
@@ -25,10 +28,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </header>
           {children}
           <footer className="footer">
-            <span>Pet Tag ID</span>
+            <span>{settings.brandName}</span>
             <nav aria-label="Legal">
               <Link href="/privacy">Privacy</Link>
               <Link href="/terms">Terms</Link>
+              <a href={`mailto:${settings.supportEmail}`}>Support</a>
             </nav>
           </footer>
         </main>

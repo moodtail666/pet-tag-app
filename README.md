@@ -1,97 +1,48 @@
-# PetTag ID 上线版项目
+# Tailvori Pet Tag Platform
 
-这是宠物防丢吊牌系统的第一版代码。
+Production MVP for unique-QR pet identification tags sold in the United States.
 
-## 功能
+## Customer flow
 
-- 吊牌激活
-- 宠物资料编辑
-- 公开扫码页面
-- 路人发送当前位置
-- 邮件通知主人
-- 管理员批量生成 Tag ID 和二维码
+1. Every physical tag receives a unique QR image, although every tag has the same visual design.
+2. The first owner scans the QR, confirms an email account, and claims the tag.
+3. The owner adds a pet photo, details, public contact choices, and a scan-alert email.
+4. Later scans open the public pet profile immediately.
+5. A finder may explicitly share precise browser location with the owner.
+6. The owner receives scan alerts by email.
 
-## 需要注册的服务
+No visible serial number, packaging card, or activation code is required.
 
-1. Supabase：数据库
-2. Vercel：部署网站
-3. Resend：发送邮件
-4. 域名：建议使用 `tag.yourdomain.com`
+## Operations
 
-## 本地准备
+- `/admin` provides customer, tag, pet, scan, batch, and site management.
+- Production batches download as a ZIP containing one SVG per tag, a manifest, and factory instructions.
+- Releasing a tag permanently removes its profile, photo, and scan history before reuse.
+- Owners can export and delete their account data from `/account`.
+- Security-attempt logs and old scan records are removed by the scheduled retention job.
 
-安装 Node.js 后，在项目目录运行：
+## Required services
 
-```bash
-npm install
-```
+- Vercel for the Next.js application
+- Supabase for authentication, PostgreSQL, and photo storage
+- Resend for scan-alert email
+- `tag.tailvori.com` as the permanent QR destination
 
-复制环境变量：
+## Environment
 
-```bash
-cp .env.example .env.local
-```
+Copy `.env.example` to `.env.local` for local work. Production values belong in Vercel only.
 
-填写：
+## Database
 
-```text
-NEXT_PUBLIC_SITE_URL
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY
-RESEND_API_KEY
-EMAIL_FROM
-```
+Run `supabase/schema.sql` in the Supabase SQL editor after every schema change. The script is designed to be safe to run more than once.
 
-启动：
+## Release checks
 
-```bash
-npm run dev
-```
+Before ordering a production batch:
 
-## Supabase 设置
-
-1. 打开 Supabase 项目。
-2. 进入 SQL Editor。
-3. 粘贴 `supabase/schema.sql`。
-4. 点击 Run。
-
-## 页面
-
-```text
-/activate
-/dashboard
-/dashboard/pets/[tagId]/edit
-/pet/[tagId]
-/admin/tags
-```
-
-## 第一版测试数据
-
-```text
-Tag ID: 99999993
-Activation Code: ABCD
-```
-
-## 上线到 Vercel
-
-1. 把项目上传到 GitHub。
-2. Vercel 导入 GitHub 项目。
-3. 在 Vercel 添加环境变量。
-4. 部署。
-5. 把域名 `tag.yourdomain.com` 绑定到 Vercel。
-
-## 正式上线前必须补的安全项
-
-第一版为了方便测试，管理员页面和邮箱后台入口较简单。正式上线前需要补：
-
-```text
-管理员登录
-真实用户密码登录或验证码登录
-Activation Code 哈希存储
-图片上传到 Supabase Storage
-接口限流
-隐私政策
-服务条款
-删除资料入口
-```
+- Deploy the exact commit used to generate the batch.
+- Verify `tag.tailvori.com` and never print a temporary Vercel URL.
+- Verify the Resend sending domain and perform a real scan-alert test.
+- Test first claim, sign-in, pet editing, finder view, location consent, email delivery, account export/deletion, and admin release on iPhone and Android.
+- Scan-test samples from every factory batch.
+- Keep a database backup and monitor Supabase, Vercel, and Resend usage.

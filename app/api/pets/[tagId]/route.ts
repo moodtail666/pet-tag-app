@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getApiUser } from "@/lib/api-auth";
+import { imageExtension, petPhotoPath } from "@/lib/pet-photo";
 import { supabaseAdmin } from "@/lib/supabase";
 
 async function ownedPet(tagId: string, userId: string) {
@@ -28,22 +29,32 @@ export async function PUT(request: Request, { params }: { params: Promise<{ tagI
   const photo = formData.get("photo");
   let photoUrl = pet.photo_url as string | null;
 
+  if (formData.get("removePhoto") === "on" && photoUrl) {
+    const oldPath = petPhotoPath(photoUrl);
+    if (oldPath?.startsWith(`${user.id}/`)) await supabaseAdmin.storage.from("pet-photos").remove([oldPath]);
+    photoUrl = null;
+  }
+
   if (photo instanceof File && photo.size > 0) {
-    const extensions: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
-    if (!extensions[photo.type] || photo.size > 5 * 1024 * 1024) {
+    if (photo.size > 5 * 1024 * 1024) {
       return NextResponse.json({ error: "Use a JPG, PNG, or WebP image smaller than 5 MB." }, { status: 400 });
     }
 
-    const path = `${user.id}/${tagId}/${crypto.randomUUID()}.${extensions[photo.type]}`;
-    const upload = await supabaseAdmin.storage.from("pet-photos").upload(path, Buffer.from(await photo.arrayBuffer()), {
+    const bytes = new Uint8Array(await photo.arrayBuffer());
+    const extension = imageExtension(bytes, photo.type);
+    if (!extension) {
+      return NextResponse.json({ error: "The selected file is not a valid JPG, PNG, or WebP image." }, { status: 400 });
+    }
+
+    const path = `${user.id}/${tagId}/${crypto.randomUUID()}.${extension}`;
+    const upload = await supabaseAdmin.storage.from("pet-photos").upload(path, Buffer.from(bytes), {
       contentType: photo.type,
-      upsert: true
+      upsert: false
     });
     if (upload.error) return NextResponse.json({ error: "Photo upload failed. Please try again." }, { status: 500 });
     if (photoUrl) {
-      const marker = "/storage/v1/object/public/pet-photos/";
-      const oldPath = photoUrl.includes(marker) ? decodeURIComponent(photoUrl.split(marker)[1]) : "";
-      if (oldPath.startsWith(`${user.id}/`)) await supabaseAdmin.storage.from("pet-photos").remove([oldPath]);
+      const oldPath = petPhotoPath(photoUrl);
+      if (oldPath?.startsWith(`${user.id}/`)) await supabaseAdmin.storage.from("pet-photos").remove([oldPath]);
     }
     photoUrl = supabaseAdmin.storage.from("pet-photos").getPublicUrl(path).data.publicUrl;
   }
@@ -66,6 +77,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ tagI
     show_address: formData.get("showAddress") === "on",
     updated_at: new Date().toISOString()
   };
+
+  if (!/^\S+@\S+\.\S+$/.test(payload.contact_email)) {
+    return NextResponse.json({ error: "Enter a valid scan alert email address." }, { status: 400 });
+  }
 
   const result = await supabaseAdmin.from("pets").update(payload).eq("id", pet.id).eq("owner_user_id", user.id);
   if (result.error) return NextResponse.json({ error: "Unable to save the profile. Please try again." }, { status: 500 });

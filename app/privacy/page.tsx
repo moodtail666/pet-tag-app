@@ -1,44 +1,50 @@
-export const metadata = { title: "Privacy Policy | Pet Tag ID" };
+import { getSiteSettings } from "@/lib/site";
 
-export default function PrivacyPage() {
+export const metadata = { title: "Privacy Policy" };
+
+export default async function PrivacyPage() {
+  const settings = await getSiteSettings();
   return (
     <article className="card legal-page">
       <h1>Privacy Policy</h1>
-      <p className="muted">Effective July 13, 2026</p>
-      <p>This policy explains how Pet Tag ID collects and uses information when pet owners register tags and when finders scan them.</p>
+      <p className="muted">Effective July 16, 2026</p>
+      <p>{settings.businessName} operates the {settings.brandName} pet identification service. This policy explains how we handle information from pet owners, account holders, and people who scan a tag.</p>
 
       <h2>Information we collect</h2>
       <ul>
-        <li>Account information, including email address and authentication records.</li>
-        <li>Pet profile information submitted by an owner, including photos, descriptions, and selected contact details.</li>
+        <li>Account information, including email address, authentication records, and acceptance of our legal terms.</li>
+        <li>Pet profiles provided by owners, including photos, descriptions, and selected contact details.</li>
         <li>Tag activation, status, and scan records.</li>
-        <li>A finder's precise location only when the finder presses the location-sharing button and grants device permission.</li>
-        <li>Limited technical and security information, such as browser type and a protected representation of an IP address.</li>
+        <li>A finder's precise coordinates only after the finder presses the location-sharing button and grants device permission.</li>
+        <li>Limited device and security information, such as browser type and a one-way protected representation of an IP address.</li>
       </ul>
 
       <h2>How we use information</h2>
-      <p>We use information to operate the tag service, display the pet profile chosen by the owner, help a finder contact the owner, send scan and location alerts, prevent abuse, provide support, and maintain service security.</p>
+      <p>We use information to operate and secure the service, activate tags, display owner-selected pet profiles, help finders contact owners, send scan and location alerts, prevent abuse, respond to support requests, and comply with law.</p>
 
       <h2>Public pet profiles</h2>
-      <p>Anyone who scans an active tag can view the pet profile. Owners control whether phone numbers and a general address appear publicly. Do not add information that should remain private.</p>
+      <p>Anyone with a tag's QR code can view its active pet profile. Owners choose whether phone numbers and a home area appear. Owners should not enter information they do not want a finder to see.</p>
 
       <h2>Finder location</h2>
-      <p>Precise coordinates are not collected automatically. They are collected only after an affirmative action and device permission, then shared with the registered owner and stored with the scan record.</p>
+      <p>We do not collect precise coordinates merely because someone scans a tag. A finder must press the share-location button and approve the browser permission. The coordinates are then shared with the registered owner and retained with the scan record. We do not sell precise location information.</p>
 
       <h2>Service providers and disclosure</h2>
-      <p>We use hosting, database, authentication, storage, and email providers to operate the service. We may also disclose information when required by law, to protect users, or in connection with a business transfer. We do not sell precise location information.</p>
+      <p>We use service providers for hosting, databases, authentication, file storage, email delivery, security, and support. They process information for us under their applicable terms. We may disclose information when required by law, to protect users or the service, or as part of a business transaction.</p>
 
-      <h2>Retention and security</h2>
-      <p>We retain information while it is needed to provide the service, meet legal obligations, resolve disputes, and prevent abuse. We use access controls, encrypted connections, restricted administrative access, and other reasonable safeguards. No online system can guarantee absolute security.</p>
+      <h2>Retention</h2>
+      <p>Account and pet profile information is retained while the account is active. Replaced photos are removed, and account deletion removes pet profiles, stored photos, and associated scan history. Security attempts are retained briefly, and scan records are generally retained for no more than 24 months unless a longer period is reasonably required for security, disputes, or law.</p>
+
+      <h2>Security</h2>
+      <p>We use encrypted connections, restricted administrative access, verified account email addresses, access controls, upload limits, and abuse monitoring. No online service can guarantee absolute security.</p>
 
       <h2>Your choices and rights</h2>
-      <p>Owners can update profile visibility and pet information from their account. Depending on location, users may request access, correction, deletion, or a copy of personal information by contacting customer support through the support address provided on our website or at purchase.</p>
+      <p>Owners can edit profile visibility, download a copy of their data, and delete their account from the account page. Depending on where you live, you may also request access, correction, deletion, or portability, and may appeal a denied privacy request. We do not sell personal information or share it for cross-context behavioral advertising.</p>
 
-      <h2>Children and international use</h2>
-      <p>The service is not directed to children under 13. Information may be processed in countries other than the user's home country, subject to applicable safeguards.</p>
+      <h2>Children and international processing</h2>
+      <p>The service is not directed to children under 13, and children under 13 may not create accounts. Information may be processed in countries other than the user's home country, subject to applicable safeguards.</p>
 
       <h2>Changes and contact</h2>
-      <p>We may update this policy and will post the revised effective date here. Questions and privacy requests may be sent to the customer support address shown on our website or order materials.</p>
+      <p>We may update this policy and will post a revised effective date. Privacy questions and requests can be sent to <a href={`mailto:${settings.supportEmail}`}>{settings.supportEmail}</a>.</p>
     </article>
   );
 }

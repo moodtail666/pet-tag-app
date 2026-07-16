@@ -64,6 +64,10 @@ create table if not exists activation_attempts (
 create table if not exists profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
   email text not null,
+  terms_accepted_at timestamptz,
+  terms_version text,
+  privacy_accepted_at timestamptz,
+  privacy_version text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -91,18 +95,15 @@ create table if not exists site_settings (
   updated_at timestamptz not null default now()
 );
 
-insert into tags (tag_id, activation_code, status)
-values
-  ('10000001', 'A7K9', 'unactivated'),
-  ('10000002', 'M3Q8', 'unactivated'),
-  ('99999993', 'ABCD', 'unactivated')
-on conflict (tag_id) do nothing;
-
 alter table tags add column if not exists owner_user_id uuid;
 alter table pets add column if not exists owner_user_id uuid;
 alter table tags add column if not exists activation_code_hash text;
 alter table tags add column if not exists batch_id text;
 alter table scan_events add column if not exists ip_hash text;
+alter table profiles add column if not exists terms_accepted_at timestamptz;
+alter table profiles add column if not exists terms_version text;
+alter table profiles add column if not exists privacy_accepted_at timestamptz;
+alter table profiles add column if not exists privacy_version text;
 alter table tags alter column activation_code drop not null;
 
 update tags
@@ -117,6 +118,7 @@ create index if not exists tags_status_created_at_idx on tags(status, created_at
 create index if not exists tags_batch_id_idx on tags(batch_id);
 create index if not exists scan_events_tag_scanned_at_idx on scan_events(tag_id, scanned_at desc);
 create index if not exists scan_events_scanned_at_idx on scan_events(scanned_at desc);
+create index if not exists scan_events_ip_scanned_at_idx on scan_events(ip_hash, scanned_at desc);
 create index if not exists scan_events_dedupe_idx on scan_events(tag_id, ip_hash, scanned_at desc);
 create index if not exists activation_attempts_ip_time_idx on activation_attempts(ip_hash, attempted_at desc);
 create index if not exists activation_attempts_time_idx on activation_attempts(attempted_at);
@@ -130,8 +132,16 @@ language plpgsql
 security definer set search_path = public
 as $$
 begin
-  insert into public.profiles (user_id, email)
-  values (new.id, coalesce(new.email, ''))
+  insert into public.profiles (
+    user_id, email, terms_accepted_at, terms_version, privacy_accepted_at, privacy_version
+  ) values (
+    new.id,
+    coalesce(new.email, ''),
+    nullif(new.raw_user_meta_data ->> 'terms_accepted_at', '')::timestamptz,
+    new.raw_user_meta_data ->> 'terms_version',
+    nullif(new.raw_user_meta_data ->> 'privacy_accepted_at', '')::timestamptz,
+    new.raw_user_meta_data ->> 'privacy_version'
+  )
   on conflict (user_id) do update set email = excluded.email, updated_at = now();
   return new;
 end;
@@ -146,15 +156,8 @@ insert into profiles (user_id, email, created_at)
 select id, coalesce(email, ''), created_at from auth.users
 on conflict (user_id) do update set email = excluded.email, updated_at = now();
 
-insert into admin_users (user_id, email)
-select id, lower(email) from auth.users
-where email is not null and email_confirmed_at is not null
-order by created_at asc
-limit 1
-on conflict (user_id) do update set email = excluded.email;
-
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('pet-photos', 'pet-photos', true, 5242880, array['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+values ('pet-photos', 'pet-photos', true, 5242880, array['image/jpeg', 'image/png', 'image/webp'])
 on conflict (id) do update set
   public = excluded.public,
   file_size_limit = excluded.file_size_limit,

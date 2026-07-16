@@ -1,14 +1,8 @@
 import Link from "next/link";
-import { supabaseAdmin } from "@/lib/supabase";
-
-const defaults = {
-  homeHeadline: "A safer way home for every pet.",
-  homeText: "Activate your pet tag, add contact details, and receive an alert when someone finds your pet."
-};
+import { getSiteSettings } from "@/lib/site";
 
 export default async function HomePage() {
-  const { data } = await supabaseAdmin.from("site_settings").select("value").eq("key", "public_site").maybeSingle();
-  const settings = { ...defaults, ...(data?.value || {}) };
+  const settings = await getSiteSettings();
 
   return (
     <section className="card">

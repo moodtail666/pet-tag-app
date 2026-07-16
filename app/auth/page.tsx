@@ -32,7 +32,15 @@ function AuthForm() {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/auth?next=${encodeURIComponent(next)}` }
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth?next=${encodeURIComponent(next)}`,
+            data: {
+              terms_accepted_at: new Date().toISOString(),
+              terms_version: "2026-07-16",
+              privacy_accepted_at: new Date().toISOString(),
+              privacy_version: "2026-07-16"
+            }
+          }
         });
         if (error) setMessage(error.message);
         else if (data.session) router.replace(next);

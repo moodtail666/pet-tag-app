@@ -22,7 +22,8 @@ function randomFriendlyText(length: number) {
 }
 
 export function generateTagId() {
-  return randomFriendlyText(12);
+  const id = randomFriendlyText(10);
+  return `TV-${id.slice(0, 4)}-${id.slice(4, 8)}-${id.slice(8)}`;
 }
 
 export function generateActivationCode() {
