@@ -1,6 +1,8 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase";
 
+export const CANONICAL_SITE_URL = "https://tag.tailvori.com";
+
 export const DEFAULT_SITE_SETTINGS = {
   brandName: "Tailvori",
   businessName: "Tailvori",

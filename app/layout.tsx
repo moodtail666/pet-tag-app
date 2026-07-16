@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getSiteSettings } from "@/lib/site";
+import { CANONICAL_SITE_URL, getSiteSettings } from "@/lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "Tailvori", template: "%s | Tailvori" },
   description: "Register a Tailvori pet ID tag and help lost pets get home safely.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://tailvori.com")
+  metadataBase: new URL(CANONICAL_SITE_URL)
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

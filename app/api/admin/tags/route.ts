@@ -3,6 +3,7 @@ import QRCode from "qrcode";
 import JSZip from "jszip";
 import { getAdminUser, writeAdminAudit } from "@/lib/admin-auth";
 import { generateTagId } from "@/lib/security";
+import { CANONICAL_SITE_URL } from "@/lib/site";
 import { supabaseAdmin } from "@/lib/supabase";
 
 export async function GET(request: Request) {
@@ -38,10 +39,9 @@ export async function POST(request: Request) {
   const body = await request.json();
   const count = Math.min(100, Math.max(1, Number(body.count) || 1));
   const batchId = String(body.batchId || new Date().toISOString().slice(0, 10)).trim().slice(0, 60);
-  const origin = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
   const generated = Array.from({ length: count }, () => {
     const tagId = generateTagId();
-    return { tagId, qrUrl: `${origin}/t/${tagId}` };
+    return { tagId, qrUrl: `${CANONICAL_SITE_URL}/t/${tagId}` };
   });
 
   const { error } = await supabaseAdmin.from("tags").insert(
