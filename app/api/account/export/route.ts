@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const [profile, tags, pets] = await Promise.all([
-    supabaseAdmin.from("profiles").select("email,created_at,updated_at,terms_accepted_at,privacy_accepted_at").eq("user_id", user.id).maybeSingle(),
+    supabaseAdmin.from("profiles").select("email,created_at,updated_at").eq("user_id", user.id).maybeSingle(),
     supabaseAdmin.from("tags").select("tag_id,status,activated_at,created_at,updated_at").eq("owner_user_id", user.id).order("created_at"),
     supabaseAdmin.from("pets").select("tag_id,name,photo_url,breed,age,sex,address,about,contact_name_1,contact_phone_1,contact_name_2,contact_phone_2,contact_email,show_phone,show_address,created_at,updated_at").eq("owner_user_id", user.id).order("created_at")
   ]);
@@ -21,9 +21,18 @@ export async function GET(request: Request) {
         .order("scanned_at")
     : { data: [] };
 
+  const metadata = user.user_metadata || {};
+  const account = {
+    ...(profile.data || { email: user.email || "" }),
+    termsAcceptedAt: metadata.terms_accepted_at || null,
+    termsVersion: metadata.terms_version || null,
+    privacyAcceptedAt: metadata.privacy_accepted_at || null,
+    privacyVersion: metadata.privacy_version || null
+  };
+
   return new NextResponse(JSON.stringify({
     exportedAt: new Date().toISOString(),
-    account: profile.data || { email: user.email || "" },
+    account,
     tags: tags.data || [],
     pets: pets.data || [],
     scans: scans.data || []
